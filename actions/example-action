@@ -1,0 +1,6 @@
+#!/usr/local/sbin/charm-env python3
+
+from lib_pi_hole import PiholeHelper
+
+helper = PiholeHelper()
+helper.action_function()
