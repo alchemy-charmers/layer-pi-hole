@@ -1,7 +1,8 @@
 import os
-import pytest
-import subprocess
 import stat
+import subprocess
+
+import pytest
 
 # Treat all tests as coroutines
 pytestmark = pytest.mark.asyncio
@@ -10,7 +11,7 @@ juju_repository = os.getenv("JUJU_REPOSITORY", ".").rstrip("/")
 series = [
     "xenial",
     "bionic",
-    pytest.param("cosmic", marks=pytest.mark.xfail(reason="canary")),
+    # pytest.param("cosmic", marks=pytest.mark.xfail(reason="canary")),
 ]
 sources = [
     ("local", "{}/builds/pi-hole".format(juju_repository)),
@@ -37,24 +38,32 @@ async def app(model, series, source):
 
 @pytest.mark.deploy
 async def test_pihole_deploy(model, series, source, request):
-   # Starts a deploy for each series
-   # Using subprocess b/c libjuju fails with JAAS
-   # https://github.com/juju/python-libjuju/issues/221
-   application_name = 'pi-hole-{}-{}'.format(series, source[0])
-   cmd = ['juju', 'deploy', source[1], '-m', model.info.name,
-           '--series', series, application_name]
-   if request.node.get_closest_marker('xfail'):
-       # If series is 'xfail' force install to allow testing against versions not in
-       # metadata.yaml
-       cmd.append('--force')
-   subprocess.check_call(cmd)
+    # Starts a deploy for each series
+    # Using subprocess b/c libjuju fails with JAAS
+    # https://github.com/juju/python-libjuju/issues/221
+    application_name = "pi-hole-{}-{}".format(series, source[0])
+    cmd = [
+        "juju",
+        "deploy",
+        source[1],
+        "-m",
+        model.info.name,
+        "--series",
+        series,
+        application_name,
+    ]
+    if request.node.get_closest_marker("xfail"):
+        # If series is 'xfail' force install to allow testing against versions not in
+        # metadata.yaml
+        cmd.append("--force")
+    subprocess.check_call(cmd)
 
 
 @pytest.mark.deploy
 @pytest.mark.timeout(300)
 async def test_charm_upgrade(model, app):
     if app.name.endswith("local"):
-        pytest.skip("No need to upgrade the local deploy")
+        pytest.skip()
     unit = app.units[0]
     await model.block_until(lambda: unit.agent_status == "idle")
     subprocess.check_call(
@@ -74,9 +83,9 @@ async def test_charm_upgrade(model, app):
 @pytest.mark.timeout(300)
 async def test_pihole_status(model, app):
     # Verifies status for all deployed series of the charm
-    await model.block_until(lambda: app.status == 'active')
+    await model.block_until(lambda: app.status == "active")
     unit = app.units[0]
-    await model.block_until(lambda: unit.agent_status == 'idle')
+    await model.block_until(lambda: unit.agent_status == "idle")
 
 
 # Tests

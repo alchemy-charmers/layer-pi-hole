@@ -1,13 +1,21 @@
 options:
-  string-option:
+  temperature-units:
     type: string
-    default: "Default Value"
-    description: "A short description of the configuration option"
-  boolean-option:
-    type: boolean
-    default: False
-    description: "A short description of the configuration option"
-  int-option:
-    type: int
-    default: 9001
-    description: "A short description of the configuration option"
+    default: "F"
+    description: "F or C for temperature units"
+  dns-addresses:
+    type: string
+    default: "1.1.1.1;1.0.0.1;2606:4700:4700::1111;2606:4700:4700::1001"
+    description: "Up to 4 dns server addresses. Seperate with ; default are Cloudflare addresses"
+#  string-option:
+#    type: string
+#    default: "Default Value"
+#    description: "A short description of the configuration option"
+#  boolean-option:
+#    type: boolean
+#    default: False
+#    description: "A short description of the configuration option"
+#  int-option:
+#    type: int
+#    default: 9001
+#    description: "A short description of the configuration option"

@@ -1,6 +1,7 @@
-import pickle
-import juju
 import base64
+import pickle
+
+import juju
 
 # from juju.errors import JujuError
 
