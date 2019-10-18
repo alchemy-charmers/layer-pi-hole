@@ -1,6 +1,7 @@
 import os
 import stat
 import subprocess
+import urllib.request
 
 import pytest
 
@@ -89,6 +90,7 @@ async def test_pihole_status(model, app):
 
 
 # Tests
+@pytest.mark.timeout(30)
 async def test_example_action(app):
     unit = app.units[0]
     action = await unit.run_action("example-action")
@@ -96,6 +98,7 @@ async def test_example_action(app):
     assert action.status == "completed"
 
 
+@pytest.mark.timeout(30)
 async def test_run_command(app, jujutools):
     unit = app.units[0]
     cmd = "hostname --all-ip-addresses"
@@ -104,6 +107,7 @@ async def test_run_command(app, jujutools):
     assert unit.public_address in results["Stdout"]
 
 
+@pytest.mark.timeout(30)
 async def test_file_stat(app, jujutools):
     unit = app.units[0]
     path = "/var/lib/juju/agents/unit-{}/charm/metadata.yaml".format(
@@ -113,3 +117,12 @@ async def test_file_stat(app, jujutools):
     assert stat.filemode(fstat.st_mode) == "-rw-r--r--"
     assert fstat.st_uid == 0
     assert fstat.st_gid == 0
+
+
+@pytest.mark.timeout(30)
+async def test_connection(model, app):
+    pi_unit = app.units[0]
+    address = f"http://{pi_unit.public_address}/admin"
+    print(f"Checking address: {address}")
+    request = urllib.request.urlopen(address)
+    assert request.getcode() == 200

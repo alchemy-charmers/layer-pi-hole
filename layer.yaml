@@ -5,3 +5,7 @@ exclude:
 # include required layers here
 includes:
   - layer:basic
+  - layer:version
+options:
+  version:
+    file_name: "repo-info"
