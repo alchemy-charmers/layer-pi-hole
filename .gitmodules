@@ -1,3 +1,6 @@
 [submodule "layers/layer-version"]
 	path = layers/layer-version
 	url = https://github.com/pirate-charmers/layer-version.git
+[submodule "layers/layer-hostname"]
+	path = layers/layer-hostname
+	url = https://github.com/chris-sanders/layer-hostname.git
