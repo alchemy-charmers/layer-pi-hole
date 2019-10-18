@@ -4,3 +4,6 @@
 [submodule "layers/layer-hostname"]
 	path = layers/layer-hostname
 	url = https://github.com/chris-sanders/layer-hostname.git
+[submodule "interfaces/interface-reverseproxy"]
+	path = interfaces/interface-reverseproxy
+	url = https://github.com/pirate-charmers/interface-reverseproxy.git

@@ -61,6 +61,11 @@ async def test_pihole_deploy(model, series, source, request):
 
 
 @pytest.mark.deploy
+async def test_haproxy_deploy(model):
+    await model.deploy("cs:~pirate-charmers/haproxy", series="xenial")
+
+
+@pytest.mark.deploy
 @pytest.mark.timeout(300)
 async def test_charm_upgrade(model, app):
     if app.name.endswith("local"):
@@ -126,3 +131,42 @@ async def test_connection(model, app):
     print(f"Checking address: {address}")
     request = urllib.request.urlopen(address)
     assert request.getcode() == 200
+
+
+@pytest.mark.relate
+@pytest.mark.timeout(30)
+async def test_add_relation(model, app):
+    haproxy = model.applications["haproxy"]
+    pihole = app
+    subdomain = app.name.split("-", 2)[2]
+    # Set the proxy-domain unique for each application
+    config = {"proxy-external-port": "80", "proxy-subdomain": subdomain}
+    await pihole.set_config(config)
+    await model.block_until(lambda: haproxy.status == "active")
+    await model.block_until(lambda: pihole.status == "active")
+    await pihole.add_relation("reverseproxy", "haproxy:reverseproxy")
+    await model.block_until(lambda: haproxy.status == "maintenance")
+    await model.block_until(lambda: haproxy.status == "active")
+
+
+@pytest.mark.timeout(30)
+async def test_relation(model, app):
+    haproxy = model.applications["haproxy"]
+    haproxy_unit = haproxy.units[0]
+
+    config = await app.get_config()
+    subdomain = config["proxy-subdomain"]["value"]
+    address = f"http://{subdomain}.{haproxy_unit.public_address}.xip.io"
+    print(f"Checking address: {address}")
+    request = urllib.request.urlopen(address)
+    info = request.info()
+    print(f"Info: {info}")
+    assert request.getcode() == 200
+    server_id = "not found"
+    for item in info.values():
+        if "SERVERID" in item:
+            server_id = item.split(";")[0]
+        else:
+            continue
+    print(f"server_id: {server_id}")
+    assert subdomain in server_id

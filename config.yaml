@@ -7,6 +7,18 @@ options:
     type: string
     default: "1.1.1.1;1.0.0.1;2606:4700:4700::1111;2606:4700:4700::1001"
     description: "Up to 4 dns server addresses. Seperate with ; default are Cloudflare addresses"
+  proxy-local:
+      type: boolean
+      description: "Set to True to restrict access via reverse-proxy to local address spaces"
+      default: True
+  proxy-subdomain:
+      type: string
+      description: "The subdomain to register with the reverseproxy"
+      default: "pihole"
+  proxy-external-port:
+      type: int
+      description: "External port for the proxy to listen on, typically 443."
+      default: 443
 #  string-option:
 #    type: string
 #    default: "Default Value"
