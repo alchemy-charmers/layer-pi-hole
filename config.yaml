@@ -23,15 +23,7 @@ options:
       type: boolean
       description: "Setup DNS over TLS via stubby. When enabled the local stub resolver will be used which includes upstream dns and dns-addresses config will not be used."
       default: True
-#  string-option:
-#    type: string
-#    default: "Default Value"
-#    description: "A short description of the configuration option"
-#  boolean-option:
-#    type: boolean
-#    default: False
-#    description: "A short description of the configuration option"
-#  int-option:
-#    type: int
-#    default: 9001
-#    description: "A short description of the configuration option"
+  enable-recursive-dns:
+      type: boolean
+      description: "Act as a recrusive DNS server."
+      default: True

@@ -9,19 +9,26 @@ class PiholeHelper:
         self.setup_vars_file = "/etc/pihole/setupVars.conf"
         self.stubby_file = "/etc/stubby/stubby.yml"
         self.stubby_service = "stubby.service"
+        self.unbound_file = "/etc/unbound/unbound.conf.d/pihole.conf"
+        self.unbound_service = "unbound.service"
+        self.ftl_service = "pihole-FTL.service"
+        self.stubby_port = 532
+        self.unbound_port = 531
 
     def action_function(self):
         """ An example function for calling from an action """
         return
 
-    def preconfig(self, interface, ipv4="", ipv6=""):
+    def preconfig(self, interface, ipv4="", ipv6="", no_custom=False):
         """ Create setupVars.conf for unattended install """
         # https://discourse.pi-hole.net/t/what-is-setupvars-conf-and-how-do-i-use-it/3533
 
         dns = self.charm_config["dns-addresses"].split(";")
         dns_addresses = ["", "", "", ""]
-        if self.charm_config["enable-dns-over-tls"]:
-            dns_addresses[0] = "127.0.0.1#853"
+        if self.charm_config["enable-recursive-dns"] and not no_custom:
+            dns_addresses[0] = "127.0.0.1#{}".format(self.unbound_port)
+        elif self.charm_config["enable-dns-over-tls"] and not no_custom:
+            dns_addresses[0] = "127.0.0.1#{}".format(self.stubby_port)
         else:
             for index, address in enumerate(dns):
                 dns_addresses[index] = address
@@ -42,8 +49,14 @@ class PiholeHelper:
         return
 
     def configure_stubby(self):
-        context = {}
+        context = {"port": self.stubby_port}
         templating.render("stubby.yml.j2", self.stubby_file, context)
+
+    def configure_unbound(self):
+        context = {"port": self.unbound_port}
+        if self.charm_config['enable-dns-over-tls']:
+            context['stubby_port'] = self.stubby_port
+        templating.render("pihole.conf", self.unbound_file, context)
 
     def configure_proxy(self, proxy):
         """Configure Pi-Hole for operation behind a reverse proxy."""

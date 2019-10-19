@@ -76,6 +76,8 @@ def pihole(
     helper.setup_vars_file = setup_vars_file.strpath
     stubby_file = tmpdir.join("stubby.yml")
     helper.stubby_file = stubby_file.strpath
+    unbound_file = tmpdir.join("pihole.conf")
+    helper.unbound_file = unbound_file.strpath
 
     # Any other functions that load helper will get this version
     monkeypatch.setattr("lib_pi_hole.PiholeHelper", lambda: helper)

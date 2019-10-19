@@ -62,8 +62,8 @@ idle_timeout: 10000
 # and IPv6. It will listen on port 53 by default. Use <IP_address>@<port> to 
 # specify a different port
 listen_addresses:
-  - 127.0.0.1@853
-  - 0::1@853
+  - 127.0.0.1@{{ port }}
+  - 0::1@{{ port }}
 
 # Instructs stubby to distribute queries across all available name servers. 
 # Set to 0 to treat the upstreams below as an ordered list and use a single
