@@ -67,3 +67,14 @@ class JujuTools:
         cmd = 'cat {}'.format(path)
         result = await self.run_command(cmd, target)
         return result['Stdout']
+
+    async def service_status(self, service, target):
+        '''
+        Returns status of a service on target unit
+
+        :param service: Name of the service
+        :param target: Unit object or unit name string
+        '''
+        cmd = 'systemctl status {}'.format(service)
+        result = await self.run_command(cmd, target)
+        return result

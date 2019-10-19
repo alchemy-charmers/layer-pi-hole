@@ -133,6 +133,17 @@ async def test_connection(model, app):
     assert request.getcode() == 200
 
 
+@pytest.mark.timeout(30)
+async def test_service_status(app, jujutools):
+    pi_unit = app.units[0]
+    status = await jujutools.service_status("pihole-FTL", pi_unit)
+    print("FTL Status:\r{}".format(status['Stdout']))
+    assert status['Code'] == "0"
+    status = await jujutools.service_status("stubby", pi_unit)
+    print("Stubby Status:\r{}".format(status['Stdout']))
+    assert status['Code'] == "0"
+
+
 @pytest.mark.relate
 @pytest.mark.timeout(30)
 async def test_add_relation(model, app):
@@ -156,7 +167,7 @@ async def test_relation(model, app):
 
     config = await app.get_config()
     subdomain = config["proxy-subdomain"]["value"]
-    address = f"http://{subdomain}.{haproxy_unit.public_address}.xip.io"
+    address = f"http://{subdomain}.{haproxy_unit.public_address}.xip.io/admin"
     print(f"Checking address: {address}")
     request = urllib.request.urlopen(address)
     info = request.info()

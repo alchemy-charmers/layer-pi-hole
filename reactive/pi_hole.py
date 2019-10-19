@@ -18,8 +18,9 @@ def preconfig_pi_hole():
 
 
 @when_not("pi-hole.installed")
-@when("pi-hole.preconfig")
+@when("pi-hole.preconfig", "stubby.configured")
 def install_pi_hole():
+    hookenv.status_set("maintenance", "Installing pihole")
     urllib.request.urlretrieve("https://install.pi-hole.net", "install.sh")
     subprocess.check_call(["chmod", "+x", "./install.sh"], stderr=subprocess.STDOUT)
     subprocess.check_call(
@@ -32,6 +33,7 @@ def install_pi_hole():
 @when_not("stubby.installed")
 def install_stubby():
     fetch.apt_install("stubby")
+    hookenv.status_set("maintenance", "Installing stubby")
     set_flag("stubby.installed")
 
 
@@ -40,6 +42,7 @@ def install_stubby():
 def configure_stubby():
     helper.configure_stubby()
     host.service_restart(helper.stubby_service)
+    hookenv.status_set("maintenance", "Configuring stubby")
     set_flag("stubby.configured")
 
 
