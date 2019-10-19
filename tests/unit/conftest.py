@@ -30,7 +30,7 @@ def mock_hookenv_config(monkeypatch):
 
     def mock_config():
         cfg = {}
-        yml = yaml.load(open("./config.yaml"))
+        yml = yaml.safe_load(open("./config.yaml"))
 
         # Load all defaults
         for key, value in yml["options"].items():
@@ -59,16 +59,23 @@ def mock_template(monkeypatch):
 
 
 @pytest.fixture
-def pihole(tmpdir, mock_hookenv_config, mock_charm_dir, mock_template, monkeypatch):
+def mock_socket(monkeypatch):
+    monkeypatch.setattr("lib_pi_hole.socket.getfqdn", lambda: 'mock-host')
+
+
+@pytest.fixture
+def pihole(
+    tmpdir, mock_hookenv_config, mock_charm_dir, mock_template, mock_socket, monkeypatch
+):
     from lib_pi_hole import PiholeHelper
 
     helper = PiholeHelper()
 
     # Example config file patching
     setup_vars_file = tmpdir.join("setupVars.conf")
-    # with open('./tests/unit/example.cfg', 'r') as src_file:
-    #     cfg_file.write(src_file.read())
     helper.setup_vars_file = setup_vars_file.strpath
+    stubby_file = tmpdir.join("stubby.yml")
+    helper.stubby_file = stubby_file.strpath
 
     # Any other functions that load helper will get this version
     monkeypatch.setattr("lib_pi_hole.PiholeHelper", lambda: helper)

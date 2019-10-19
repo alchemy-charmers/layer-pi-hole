@@ -10,7 +10,7 @@ pytestmark = pytest.mark.asyncio
 
 juju_repository = os.getenv("JUJU_REPOSITORY", ".").rstrip("/")
 series = [
-    "xenial",
+    # "xenial",
     "bionic",
     # pytest.param("cosmic", marks=pytest.mark.xfail(reason="canary")),
 ]

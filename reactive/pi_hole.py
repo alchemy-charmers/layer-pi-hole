@@ -1,7 +1,8 @@
 import subprocess
 import urllib.request
 
-from charmhelpers.core import hookenv
+from charmhelpers import fetch
+from charmhelpers.core import hookenv, host
 from charms.reactive import clear_flag, endpoint_from_name, set_flag, when, when_not
 from lib_pi_hole import PiholeHelper
 
@@ -26,6 +27,20 @@ def install_pi_hole():
     )
     hookenv.status_set("active", HEALTHY)
     set_flag("pi-hole.installed")
+
+
+@when_not("stubby.installed")
+def install_stubby():
+    fetch.apt_install("stubby")
+    set_flag("stubby.installed")
+
+
+@when("stubby.installed")
+@when_not("stubby.configured")
+def configure_stubby():
+    helper.configure_stubby()
+    host.service_restart(helper.stubby_service)
+    set_flag("stubby.configured")
 
 
 @when("reverseproxy.ready")

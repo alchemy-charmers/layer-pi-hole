@@ -6,7 +6,7 @@ options:
   dns-addresses:
     type: string
     default: "1.1.1.1;1.0.0.1;2606:4700:4700::1111;2606:4700:4700::1001"
-    description: "Up to 4 dns server addresses. Seperate with ; default are Cloudflare addresses"
+    description: "Up to 4 dns server addresses. Seperate with ; default are Cloudflare addresses. This config only applies if dns-over-tls is disabled."
   proxy-local:
       type: boolean
       description: "Set to True to restrict access via reverse-proxy to local address spaces"
@@ -19,6 +19,10 @@ options:
       type: int
       description: "External port for the proxy to listen on, typically 443."
       default: 443
+  enable-dns-over-tls:
+      type: boolean
+      description: "Setup DNS over TLS via stubby. When enabled the local stub resolver will be used which includes upstream dns and dns-addresses config will not be used."
+      default: True
 #  string-option:
 #    type: string
 #    default: "Default Value"
