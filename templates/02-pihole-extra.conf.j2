@@ -1,0 +1,5 @@
+{%- if num_forwards: -%}
+{%- for domain, address in forwards: -%}
+server=/{{ domain }}/{{ address }}
+{% endfor -%}
+{%- endif -%}

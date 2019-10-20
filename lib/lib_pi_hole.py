@@ -12,6 +12,7 @@ class PiholeHelper:
         self.unbound_file = "/etc/unbound/unbound.conf.d/pihole.conf"
         self.unbound_service = "unbound.service"
         self.ftl_service = "pihole-FTL.service"
+        self.pihole_extra_file = "/etc/dnsmasq.d/02-pihole-extra.conf"
         self.stubby_port = 532
         self.unbound_port = 531
 
@@ -54,9 +55,17 @@ class PiholeHelper:
 
     def configure_unbound(self):
         context = {"port": self.unbound_port}
-        if self.charm_config['enable-dns-over-tls']:
-            context['stubby_port'] = self.stubby_port
+        if self.charm_config["enable-dns-over-tls"]:
+            context["stubby_port"] = self.stubby_port
         templating.render("pihole.conf", self.unbound_file, context)
+
+    def configure_conditional_forwards(self):
+        forwards = []
+        for entry in self.charm_config["conditional-forwards"].split(","):
+            if len(entry):
+                forwards.append(entry.split(":"))
+        context = {"forwards": forwards, "num_forwards": len(forwards)}
+        templating.render("02-pihole-extra.conf.j2", self.pihole_extra_file, context)
 
     def configure_proxy(self, proxy):
         """Configure Pi-Hole for operation behind a reverse proxy."""

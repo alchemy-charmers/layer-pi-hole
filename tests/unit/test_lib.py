@@ -24,7 +24,10 @@ class TestLib:
         assert b"PIHOLE_INTERFACE=eth0\n" in content
         assert b"IPV4_ADDRESS=ipv4\n" in content
         assert b"IPV6_ADDRESS=\n" in content
-        assert "PIHOLE_DNS_1=127.0.0.1#{}\n".format(pihole.unbound_port).encode() in content
+        assert (
+            "PIHOLE_DNS_1=127.0.0.1#{}\n".format(pihole.unbound_port).encode()
+            in content
+        )
         assert b"PIHOLE_DNS_2=\n" in content
         assert b"PIHOLE_DNS_3=\n" in content
         assert b"PIHOLE_DNS_4=\n" in content
@@ -42,7 +45,9 @@ class TestLib:
         assert b"PIHOLE_INTERFACE=eth0\n" in content
         assert b"IPV4_ADDRESS=ipv4\n" in content
         assert b"IPV6_ADDRESS=\n" in content
-        assert "PIHOLE_DNS_1=127.0.0.1#{}\n".format(pihole.stubby_port).encode() in content
+        assert (
+            "PIHOLE_DNS_1=127.0.0.1#{}\n".format(pihole.stubby_port).encode() in content
+        )
         assert b"PIHOLE_DNS_2=\n" in content
         assert b"PIHOLE_DNS_3=\n" in content
         assert b"PIHOLE_DNS_4=\n" in content
@@ -102,8 +107,14 @@ class TestLib:
             print(pihole.unbound_file)
             content = unbound_file.readlines()
             print(content)
-        assert "        forward-addr: 127.0.0.1@{}\n".format(pihole.stubby_port).encode() in content
-        assert "    do-not-query-localhost: no\n".format(pihole.stubby_port).encode() in content
+        assert (
+            "        forward-addr: 127.0.0.1@{}\n".format(pihole.stubby_port).encode()
+            in content
+        )
+        assert (
+            "    do-not-query-localhost: no\n".format(pihole.stubby_port).encode()
+            in content
+        )
 
     def test_configure_unbound_no_stubby(self, pihole):
         # Upstream includes Quad9 and Cloudflair
@@ -115,6 +126,24 @@ class TestLib:
             print(content)
         assert b"        forward-addr: 9.9.9.9\n" in content
         assert b"        forward-addr: 1.1.1.1\n" in content
+
+    def test_configure_conditional_forwards_default(self, pihole):
+        pihole.configure_conditional_forwards()
+        with open(pihole.pihole_extra_file, "rb") as pihole_extra_file:
+            print(pihole_extra_file)
+            content = pihole_extra_file.readlines()
+            print(content)
+        assert content == []
+
+    def test_configure_conditional_forwards_configured(self, pihole):
+        pihole.charm_config["conditional-forwards"] = "example:10.0.0.1,domain:10.0.0.0"
+        pihole.configure_conditional_forwards()
+        with open(pihole.pihole_extra_file, "rb") as pihole_extra_file:
+            print(pihole_extra_file)
+            content = pihole_extra_file.readlines()
+            print(content)
+        assert b'server=/example/10.0.0.1\n' in content
+        assert b'server=/domain/10.0.0.0\n' in content
 
     def test_proxy_config(self, pihole):
         proxy = mock.MagicMock()

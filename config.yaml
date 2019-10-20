@@ -25,5 +25,9 @@ options:
       default: True
   enable-recursive-dns:
       type: boolean
-      description: "Act as a recrusive DNS server."
+      description: "Setup as recrusive DNS server."
       default: True
+  conditional-forwards:
+      type: string
+      description: "List of local domains and servers to forward them to. Comma seperated list with domain:server. Example local:192.168.1.1,vpn:10.0.0.1"
+      default: ""

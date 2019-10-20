@@ -78,6 +78,8 @@ def pihole(
     helper.stubby_file = stubby_file.strpath
     unbound_file = tmpdir.join("pihole.conf")
     helper.unbound_file = unbound_file.strpath
+    pihole_extra_file = tmpdir.join("02-pihole-extra.conf")
+    helper.pihole_extra_file = pihole_extra_file.strpath
 
     # Any other functions that load helper will get this version
     monkeypatch.setattr("lib_pi_hole.PiholeHelper", lambda: helper)

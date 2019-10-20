@@ -137,11 +137,21 @@ async def test_connection(model, app):
 async def test_service_status(app, jujutools):
     pi_unit = app.units[0]
     status = await jujutools.service_status("pihole-FTL", pi_unit)
-    print("FTL Status:\r{}".format(status['Stdout']))
-    assert status['Code'] == "0"
+    print("FTL Status:\r{}".format(status["Stdout"]))
+    assert status["Code"] == "0"
     status = await jujutools.service_status("stubby", pi_unit)
-    print("Stubby Status:\r{}".format(status['Stdout']))
-    assert status['Code'] == "0"
+    print("Stubby Status:\r{}".format(status["Stdout"]))
+    assert status["Code"] == "0"
+
+
+@pytest.mark.timeout(30)
+async def test_set_forwards(app, jujutools):
+    unit = app.units[0]
+    config = {"conditional-forwards": "example:10.0.0.1"}
+    await app.set_config(config)
+    contents = await jujutools.file_contents('/etc/dnsmasq.d/02-pihole-extra.conf', unit)
+    print(contents)
+    assert "server=/example/10.0.0.1\n" in contents
 
 
 @pytest.mark.relate

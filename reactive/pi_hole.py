@@ -10,18 +10,12 @@ helper = PiholeHelper()
 HEALTHY = "Pi-Hole installed and configured"
 
 
-# @when_not("pi-hole.preconfig")
-# def preconfig_pi_hole():
-#     # TODO: detect this interface
-#     helper.preconfig(interface="eth0", ipv4=hookenv.unit_public_ip(), no_custom=True)
-#     set_flag("pi-hole.preconfig")
-
-
 @when_not("pi-hole.installed")
 @when("stubby.installed")
 def install_pi_hole():
     hookenv.status_set("maintenance", "Installing pihole")
-    # Ignore custom upstream, unbound will be installe dafter pi-hole
+    # Ignore custom upstream, unbound will be installed after pi-hole and
+    # then we can add stubby and unbound to pihole
     helper.preconfig(interface="eth0", ipv4=hookenv.unit_public_ip(), no_custom=True)
     urllib.request.urlretrieve("https://install.pi-hole.net", "install.sh")
     subprocess.check_call(["chmod", "+x", "./install.sh"], stderr=subprocess.STDOUT)
@@ -38,15 +32,6 @@ def install_stubby():
     helper.configure_stubby()
     host.service_restart(helper.stubby_service)
     set_flag("stubby.installed")
-
-
-# @when("stubby.installed")
-# @when_not("stubby.configured")
-# def configure_stubby():
-#     hookenv.status_set("maintenance", "Configuring stubby")
-#     helper.configure_stubby()
-#     host.service_restart(helper.stubby_service)
-#     set_flag("stubby.configured")
 
 
 @when_not("unbound.installed")
@@ -66,6 +51,7 @@ def install_unbound():
 def configure_pihole():
     """ Rerun install to reconfigure pihole"""
     helper.preconfig(interface="eth0", ipv4=hookenv.unit_public_ip())
+    helper.configure_conditional_forwards()
     subprocess.check_call(
         ["sudo", "./install.sh", "--reconfigure", "--unattended"],
         stderr=subprocess.STDOUT,
@@ -74,13 +60,13 @@ def configure_pihole():
     hookenv.status_set("active", HEALTHY)
 
 
-# @when("unbound.installed")
-# @when_not("unbound.configured")
-# def configure_unbound():
-#     hookenv.status_set("maintenance", "Configureing unbound")
-#     helper.configure_unbound()
-#     host.service_restart(helper.unbound_service)
-# set_flag("unbound.configured")
+# @when('config.changed')
+@when("config.changed.conditional-forwards", "pi-hole.configured")
+def configure_conditional_forwards():
+    """ Configure local forarding if provided """
+    hookenv.log("Reconfiguring conditional forwards")
+    helper.configure_conditional_forwards()
+    host.service_restart(helper.ftl_service)
 
 
 @when("reverseproxy.ready")
