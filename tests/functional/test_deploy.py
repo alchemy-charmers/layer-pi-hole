@@ -136,11 +136,17 @@ async def test_connection(model, app):
 @pytest.mark.timeout(30)
 async def test_service_status(app, jujutools):
     pi_unit = app.units[0]
+    # FTL
     status = await jujutools.service_status("pihole-FTL", pi_unit)
     print("FTL Status:\r{}".format(status["Stdout"]))
     assert status["Code"] == "0"
+    # stubby
     status = await jujutools.service_status("stubby", pi_unit)
     print("Stubby Status:\r{}".format(status["Stdout"]))
+    assert status["Code"] == "0"
+    # unbound
+    status = await jujutools.service_status("unbound", pi_unit)
+    print("Unbound Status:\r{}".format(status["Stdout"]))
     assert status["Code"] == "0"
 
 
@@ -149,9 +155,68 @@ async def test_set_forwards(app, jujutools):
     unit = app.units[0]
     config = {"conditional-forwards": "example:10.0.0.1"}
     await app.set_config(config)
-    contents = await jujutools.file_contents('/etc/dnsmasq.d/02-pihole-extra.conf', unit)
+    contents = await jujutools.file_contents(
+        "/etc/dnsmasq.d/02-pihole-extra.conf", unit
+    )
     print(contents)
     assert "server=/example/10.0.0.1\n" in contents
+
+
+@pytest.mark.timeout(150)  # Runs 4 reconfigures which can take some time
+async def test_reconfigure_upstreams(model, app, jujutools):
+    unit = app.units[0]
+    # Default Recrusion and TLS, pi-hole uses unbound and unbound uses stubby
+    # Unbound uses stubby
+    contents = await jujutools.file_contents(
+        "/etc/unbound/unbound.conf.d/pihole.conf", unit
+    )
+    print(contents)
+    assert "forward-addr: 127.0.0.1@532" in contents
+    # Pi-hole uses unbound
+    contents = await jujutools.file_contents("/etc/pihole/setupVars.conf", unit)
+    print(contents)
+    assert "PIHOLE_DNS_1=127.0.0.1#531" in contents
+
+    # Recrusion w/o TLS should reconfigure unbound to not use stubby
+    config = {"enable-dns-over-tls": "false", "enable-recursive-dns": "true"}
+    await app.set_config(config)
+    # Wait for config to apply
+    await model.block_until(lambda: unit.agent_status == "executing")
+    await model.block_until(lambda: unit.agent_status == "idle")
+    # Check result
+    contents = await jujutools.file_contents(
+        "/etc/unbound/unbound.conf.d/pihole.conf", unit
+    )
+    print(contents)
+    assert "forward-addr: 9.9.9.9" in contents
+
+    # No Recrusion No TLS should reconfigure pi-hole to not use unbound
+    config = {"enable-dns-over-tls": "false", "enable-recursive-dns": "false"}
+    await app.set_config(config)
+    # Wait for config to apply
+    await model.block_until(lambda: unit.agent_status == "executing")
+    await model.block_until(lambda: unit.agent_status == "idle")
+    # Check result
+    contents = await jujutools.file_contents("/etc/pihole/setupVars.conf", unit)
+    print(contents)
+    assert "PIHOLE_DNS_1=1.1.1.1" in contents
+
+    # TLS w/o Recrusion pi-hole should use stubby
+    config = {"enable-dns-over-tls": "true", "enable-recursive-dns": "false"}
+    await app.set_config(config)
+    # Wait for config to apply
+    await model.block_until(lambda: unit.agent_status == "executing")
+    await model.block_until(lambda: unit.agent_status == "idle")
+    # Check result
+    contents = await jujutools.file_contents("/etc/pihole/setupVars.conf", unit)
+    print(contents)
+    assert "PIHOLE_DNS_1=127.0.0.1#532" in contents
+
+    # Reset defaults TLS & Recursion both on
+    config = {"enable-dns-over-tls": "true", "enable-recursive-dns": "true"}
+    await app.set_config(config)
+    await model.block_until(lambda: unit.agent_status == "executing")
+    await model.block_until(lambda: unit.agent_status == "idle")
 
 
 @pytest.mark.relate

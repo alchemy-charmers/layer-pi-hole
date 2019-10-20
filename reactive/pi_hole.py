@@ -50,6 +50,7 @@ def install_unbound():
 @when_not("pi-hole.configured")
 def configure_pihole():
     """ Rerun install to reconfigure pihole"""
+    hookenv.status_set("maintenance", "Configuring pi-hole")
     helper.preconfig(interface="eth0", ipv4=hookenv.unit_public_ip())
     helper.configure_conditional_forwards()
     subprocess.check_call(
@@ -60,13 +61,32 @@ def configure_pihole():
     hookenv.status_set("active", HEALTHY)
 
 
-# @when('config.changed')
 @when("config.changed.conditional-forwards", "pi-hole.configured")
 def configure_conditional_forwards():
     """ Configure local forarding if provided """
     hookenv.log("Reconfiguring conditional forwards")
     helper.configure_conditional_forwards()
     host.service_restart(helper.ftl_service)
+
+
+@when("config.changed.enable-recursive-dns", "pi-hole.configured")
+def reconfigure_recursive():
+    # Chaning recrusive is only a matter of updating pi-hole config to use or
+    # not use unbound
+    configure_pihole()
+
+
+@when("config.changed.enable-dns-over-tls", "pi-hole.configured")
+def reconfigure_dns_over_tls():
+    # Pi-hole or unbound could be using stubby, both need to be updated to match
+    # the configuration.
+
+    # Update Unbound configuration to use or not use tls
+    helper.configure_unbound()
+    host.service_restart(helper.unbound_service)
+
+    # Update pi-hole configuration
+    configure_pihole()
 
 
 @when("reverseproxy.ready")
