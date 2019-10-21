@@ -1,6 +1,8 @@
+from pathlib import Path
 import socket
+import subprocess
 
-from charmhelpers.core import hookenv, templating
+from charmhelpers.core import hookenv, templating, unitdata
 
 
 class PiholeHelper:
@@ -15,6 +17,7 @@ class PiholeHelper:
         self.pihole_extra_file = "/etc/dnsmasq.d/02-pihole-extra.conf"
         self.stubby_port = 532
         self.unbound_port = 531
+        self.db = unitdata.kv()
 
     def action_function(self):
         """ An example function for calling from an action """
@@ -36,6 +39,14 @@ class PiholeHelper:
         temp_units = "F"
         if self.charm_config["temperature-units"] == "C":
             temp_units = "C"
+
+        webpass = ""
+        setup_file = Path(self.setup_vars_file)
+        if setup_file.is_file():
+            with open(self.setup_vars_file, "rb") as setup_file:
+                for line in setup_file:
+                    if line.startswith(b"WEBPASSWORD"):
+                        webpass = line[12:-1].decode()
         context = {
             "interface": interface,
             "ipv4_address": ipv4,
@@ -45,6 +56,7 @@ class PiholeHelper:
             "dns3": dns_addresses[2],
             "dns4": dns_addresses[3],
             "temp_unit": temp_units,
+            "password": webpass,
         }
         templating.render("setupVars.conf.j2", self.setup_vars_file, context)
         return
@@ -80,3 +92,9 @@ class PiholeHelper:
             }
         ]
         proxy.configure(proxy_config)
+
+    def set_password(self, password):
+        """ Set a password for the web interface """
+        subprocess.check_call(
+            ["sudo", "pihole", "-a", "-p", password], stderr=subprocess.STDOUT
+        )

@@ -94,11 +94,10 @@ async def test_pihole_status(model, app):
     await model.block_until(lambda: unit.agent_status == "idle")
 
 
-# Tests
 @pytest.mark.timeout(30)
-async def test_example_action(app):
+async def test_action_set_password(app):
     unit = app.units[0]
-    action = await unit.run_action("example-action")
+    action = await unit.run_action("set-password", password="testpassword")
     action = await action.wait()
     assert action.status == "completed"
 
@@ -150,11 +149,14 @@ async def test_service_status(app, jujutools):
     assert status["Code"] == "0"
 
 
-@pytest.mark.timeout(30)
-async def test_set_forwards(app, jujutools):
+@pytest.mark.timeout(45)
+async def test_set_forwards(model, app, jujutools):
     unit = app.units[0]
     config = {"conditional-forwards": "example:10.0.0.1"}
     await app.set_config(config)
+    # Wait for config to apply
+    await model.block_until(lambda: unit.agent_status == "executing")
+    await model.block_until(lambda: unit.agent_status == "idle")
     contents = await jujutools.file_contents(
         "/etc/dnsmasq.d/02-pihole-extra.conf", unit
     )
