@@ -56,16 +56,31 @@ def mock_charm_dir(monkeypatch):
 @pytest.fixture
 def mock_template(monkeypatch):
     monkeypatch.setattr("lib_pi_hole.templating.host.os.fchown", mock.Mock())
+    monkeypatch.setattr("lib_pi_hole.templating.host.os.chown", mock.Mock())
+    monkeypatch.setattr("lib_pi_hole.templating.host.os.fchmod", mock.Mock())
 
 
 @pytest.fixture
 def mock_socket(monkeypatch):
-    monkeypatch.setattr("lib_pi_hole.socket.getfqdn", lambda: 'mock-host')
+    monkeypatch.setattr("lib_pi_hole.socket.getfqdn", lambda: "mock-host")
+
+
+@pytest.fixture
+def mock_subprocess(monkeypatch):
+    mock_subprocess = mock.Mock()
+    monkeypatch.setattr("lib_pi_hole.subprocess", mock_subprocess)
+    return mock_subprocess
 
 
 @pytest.fixture
 def pihole(
-    tmpdir, mock_hookenv_config, mock_charm_dir, mock_template, mock_socket, monkeypatch
+    tmpdir,
+    mock_hookenv_config,
+    mock_charm_dir,
+    mock_template,
+    mock_socket,
+    mock_subprocess,
+    monkeypatch,
 ):
     from lib_pi_hole import PiholeHelper
 
@@ -80,6 +95,9 @@ def pihole(
     helper.unbound_file = unbound_file.strpath
     pihole_extra_file = tmpdir.join("02-pihole-extra.conf")
     helper.pihole_extra_file = pihole_extra_file.strpath
+
+    # mocked functions
+    helper.mock_subprocess = mock_subprocess
 
     # Any other functions that load helper will get this version
     monkeypatch.setattr("lib_pi_hole.PiholeHelper", lambda: helper)

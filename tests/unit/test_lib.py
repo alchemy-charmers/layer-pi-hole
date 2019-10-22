@@ -91,6 +91,26 @@ class TestLib:
         assert b"PIHOLE_DNS_4=\n" in content
         assert b"TEMPERATUREUNIT=C\n" in content
 
+    def test_preconfig_existing_password(self, pihole):
+        # Generate a config file
+        pihole.preconfig(interface="eth0", ipv4="ipv4")
+        # Add a value for WEBPASSWORD
+        with open(pihole.setup_vars_file, "rb") as var_file:
+            content = var_file.readlines()
+        for index, line in enumerate(content):
+            if line.startswith(b"WEBPASSWORD"):
+                new_line = line.decode().replace("\n", "TESTPASS\n").encode()
+                content[index] = new_line
+        with open(pihole.setup_vars_file, "wb") as var_file:
+            var_file.writelines(content)
+        # Re-write the file to check if password is maintained
+        pihole.preconfig(interface="eth0", ipv4="ipv4")
+        with open(pihole.setup_vars_file, "rb") as var_file:
+            print(pihole.setup_vars_file)
+            content = var_file.readlines()
+            print(content)
+        assert b"WEBPASSWORD=TESTPASS\n" in content
+
     def test_configure_stubby(self, pihole):
         pihole.configure_stubby()
         with open(pihole.stubby_file, "rb") as stubby_file:
@@ -142,8 +162,8 @@ class TestLib:
             print(pihole_extra_file)
             content = pihole_extra_file.readlines()
             print(content)
-        assert b'server=/example/10.0.0.1\n' in content
-        assert b'server=/domain/10.0.0.0\n' in content
+        assert b"server=/example/10.0.0.1\n" in content
+        assert b"server=/domain/10.0.0.0\n" in content
 
     def test_proxy_config(self, pihole):
         proxy = mock.MagicMock()
@@ -162,5 +182,11 @@ class TestLib:
             }
         ]
         proxy.configure.assert_called_with(config)
+
+    def test_set_password(self, pihole):
+        pihole.set_password("Mypass")
+        args, kwargs = pihole.mock_subprocess.check_call.call_args
+        assert pihole.mock_subprocess.check_call.call_count == 1
+        assert args[0] == ['sudo', 'pihole', '-a', '-p', 'Mypass']
 
     # Include tests for functions in lib_pi_hole
