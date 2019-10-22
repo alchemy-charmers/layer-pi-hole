@@ -19,10 +19,6 @@ class PiholeHelper:
         self.unbound_port = 531
         self.db = unitdata.kv()
 
-    def action_function(self):
-        """ An example function for calling from an action """
-        return
-
     def preconfig(self, interface, ipv4="", ipv6="", no_custom=False):
         """ Create setupVars.conf for unattended install """
         # https://discourse.pi-hole.net/t/what-is-setupvars-conf-and-how-do-i-use-it/3533
@@ -97,4 +93,14 @@ class PiholeHelper:
         """ Set a password for the web interface """
         subprocess.check_call(
             ["sudo", "pihole", "-a", "-p", password], stderr=subprocess.STDOUT
+        )
+
+    def update(self):
+        """ Update via pihole cli """
+        subprocess.check_call(["sudo", "pihole", "-up"], stderr=subprocess.STDOUT)
+
+    def restart_dns(self):
+        """ Restart dns via pihole cli """
+        subprocess.check_call(
+            ["sudo", "pihole", "restartdns"], stderr=subprocess.STDOUT
         )

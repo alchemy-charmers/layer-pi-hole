@@ -1,6 +1,9 @@
 #!/usr/local/sbin/charm-env python3
 
+from charmhelpers.core import hookenv
 from lib_pi_hole import PiholeHelper
 
 helper = PiholeHelper()
-helper.action_function()
+
+hookenv.log('Updating pihole','INFO')
+helper.restart_dns()

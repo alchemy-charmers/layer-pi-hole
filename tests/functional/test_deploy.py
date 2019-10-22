@@ -103,6 +103,22 @@ async def test_action_set_password(app):
 
 
 @pytest.mark.timeout(30)
+async def test_action_restart_dns(app):
+    unit = app.units[0]
+    action = await unit.run_action("restart-dns")
+    action = await action.wait()
+    assert action.status == "completed"
+
+
+@pytest.mark.timeout(30)
+async def test_action_update(app):
+    unit = app.units[0]
+    action = await unit.run_action("update")
+    action = await action.wait()
+    assert action.status == "completed"
+
+
+@pytest.mark.timeout(30)
 async def test_run_command(app, jujutools):
     unit = app.units[0]
     cmd = "hostname --all-ip-addresses"

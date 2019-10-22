@@ -5,5 +5,5 @@ from lib_pi_hole import PiholeHelper
 
 helper = PiholeHelper()
 
-hookenv.log('Setting pi-hole password','INFO')
-helper.set_password(password=hookenv.action_get('password'))
+hookenv.log('Updating pihole','INFO')
+helper.update()

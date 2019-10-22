@@ -10,10 +10,6 @@ class TestLib:
         """ See if the helper fixture works to load charm configs """
         assert isinstance(pihole.charm_config, dict)
 
-    def test_action_function(self, pihole):
-        """ See if the example action can be caled """
-        pihole.action_function()
-
     def test_preconfig_defaults(self, pihole):
         """ Verify the preconfig template generation """
         # Test with default config values

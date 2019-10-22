@@ -1,12 +1,11 @@
-import imp
-
-import mock
+from importlib.machinery import SourceFileLoader
 
 
-class TestActions():
-    def test_example_action(self, pihole, monkeypatch):
-        mock_function = mock.Mock()
-        monkeypatch.setattr(pihole, 'action_function', mock_function)
-        assert mock_function.call_count == 0
-        imp.load_source('action_function', './actions/example-action')
-        assert mock_function.call_count == 1
+class TestActions:
+    def test_restart_dns(self, pihole):
+        SourceFileLoader("actions", "./actions/restart-dns").load_module()
+        assert pihole.mock_subprocess.check_call.call_count == 1
+
+    def test_update(self, pihole):
+        SourceFileLoader("actions", "./actions/update").load_module()
+        assert pihole.mock_subprocess.check_call.call_count == 1

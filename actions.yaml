@@ -1,8 +1,10 @@
-example-action:
-  description: "This is just a test"
 set-password:
   description: "Set the password for the web interface"
   params:
     password:
       type: string
       description: "The password to set"
+update:
+  description: "Update pi-hole"
+restart-dns:
+  description: "Restart dns service"
